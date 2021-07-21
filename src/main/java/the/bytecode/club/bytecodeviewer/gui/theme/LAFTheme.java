@@ -4,9 +4,9 @@ import com.github.weisj.darklaf.LafManager;
 import com.github.weisj.darklaf.theme.*;
 import the.bytecode.club.bytecodeviewer.BytecodeViewer;
 import the.bytecode.club.bytecodeviewer.Configuration;
-import the.bytecode.club.bytecodeviewer.gui.components.SettingsDialogue;
+import the.bytecode.club.bytecodeviewer.gui.components.SettingsDialog;
 import the.bytecode.club.bytecodeviewer.gui.components.VisibleComponent;
-import the.bytecode.club.bytecodeviewer.translation.Translation;
+import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,25 +18,25 @@ import java.awt.*;
  */
 public enum LAFTheme
 {
-	SYSTEM("System Theme", RSTATheme.THEME_MATCH, Translation.SYSTEM_THEME), //System theme
-	DARK("Dark Theme", RSTATheme.THEME_MATCH, Translation.DARK_THEME), //DarkLaf
-	LIGHT("Light Theme", RSTATheme.THEME_MATCH, Translation.LIGHT_THEME), //Intellij theme
-	ONE_DARK("One Dark Theme", RSTATheme.THEME_MATCH, Translation.ONE_DARK_THEME),
-	SOLARIZED_DARK("Solarized Dark Theme", RSTATheme.THEME_MATCH, Translation.SOLARIZED_DARK_THEME),
-	SOLARIZED_LIGHT("Solarized Light Theme", RSTATheme.THEME_MATCH, Translation.SOLARIZED_LIGHT_THEME),
-	HIGH_CONTRAST_DARK("High Contrast Dark Theme", RSTATheme.THEME_MATCH, Translation.HIGH_CONTRAST_DARK_THEME),
-	HIGH_CONTRAST_LIGHT("High Contrast Light Theme", RSTATheme.THEME_MATCH, Translation.HIGH_CONTRAST_LIGHT_THEME),
+	SYSTEM("System Theme", RSTATheme.THEME_MATCH, TranslatedComponents.SYSTEM_THEME), //System theme
+	DARK("Dark Theme", RSTATheme.THEME_MATCH, TranslatedComponents.DARK_THEME), //DarkLaf
+	LIGHT("Light Theme", RSTATheme.THEME_MATCH, TranslatedComponents.LIGHT_THEME), //Intellij theme
+	ONE_DARK("One Dark Theme", RSTATheme.THEME_MATCH, TranslatedComponents.ONE_DARK_THEME),
+	SOLARIZED_DARK("Solarized Dark Theme", RSTATheme.THEME_MATCH, TranslatedComponents.SOLARIZED_DARK_THEME),
+	SOLARIZED_LIGHT("Solarized Light Theme", RSTATheme.THEME_MATCH, TranslatedComponents.SOLARIZED_LIGHT_THEME),
+	HIGH_CONTRAST_DARK("High Contrast Dark Theme", RSTATheme.THEME_MATCH, TranslatedComponents.HIGH_CONTRAST_DARK_THEME),
+	HIGH_CONTRAST_LIGHT("High Contrast Light Theme", RSTATheme.THEME_MATCH, TranslatedComponents.HIGH_CONTRAST_LIGHT_THEME),
 	;
 	
 	private final String readableName;
 	private final RSTATheme rstaTheme;
-	private final Translation translation;
+	private final TranslatedComponents translatedComponents;
 	
-	LAFTheme(String readableName, RSTATheme rstaTheme, Translation translation)
+	LAFTheme(String readableName, RSTATheme rstaTheme, TranslatedComponents translatedComponents)
 	{
 		this.readableName = readableName;
 		this.rstaTheme = rstaTheme;
-		this.translation = translation;
+		this.translatedComponents = translatedComponents;
 	}
 	
 	public String getReadableName()
@@ -49,9 +49,9 @@ public enum LAFTheme
 		return rstaTheme;
 	}
 	
-	public Translation getTranslation()
+	public TranslatedComponents getTranslation()
 	{
-		return translation;
+		return translatedComponents;
 	}
 	
 	public boolean isDark()
@@ -118,13 +118,14 @@ public enum LAFTheme
 		if(BytecodeViewer.viewer != null)
 		{
 			BytecodeViewer.viewer.uiComponents.forEach(VisibleComponent::setDefaultIcon);
-			//update all of the setting dialogue components
-			SettingsDialogue.components.forEach(SwingUtilities::updateComponentTreeUI);
 			
-			//TODO instead of hiding this should update/rebuild the dialogue
+			//update all of the setting dialog components
+			SettingsDialog.components.forEach(SwingUtilities::updateComponentTreeUI);
 			
-			//hide any existing jDialogues
-			SettingsDialogue.dialogues.forEach(Dialog::dispose);
+			//TODO instead of hiding the currently opened dialogs it should update/rebuild the dialogs
+			
+			//hide any existing jDialogs
+			SettingsDialog.dialogs.forEach(Dialog::dispose);
 		}
 	}
 	

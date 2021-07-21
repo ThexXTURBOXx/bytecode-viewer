@@ -1,16 +1,19 @@
 package the.bytecode.club.bytecodeviewer.gui.components;
 
+import the.bytecode.club.bytecodeviewer.BytecodeViewer;
 import the.bytecode.club.bytecodeviewer.GlobalHotKeys;
 import the.bytecode.club.bytecodeviewer.resources.IconResources;
 import the.bytecode.club.bytecodeviewer.gui.components.listeners.PressKeyListener;
 import the.bytecode.club.bytecodeviewer.gui.components.listeners.ReleaseKeyListener;
-import the.bytecode.club.bytecodeviewer.translation.Translation;
+import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
 import the.bytecode.club.bytecodeviewer.translation.components.TranslatedJCheckBox;
 import the.bytecode.club.bytecodeviewer.util.JTextAreaUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelListener;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -41,7 +44,7 @@ public class SearchableJTextArea extends JTextArea
 	private final JScrollPane scrollPane = new JScrollPane();
 	private final JPanel searchPanel = new JPanel(new BorderLayout());
 	private final JTextField searchInput = new JTextField();
-	private final JCheckBox caseSensitiveSearch = new TranslatedJCheckBox("Exact", Translation.EXACT);
+	private final JCheckBox caseSensitiveSearch = new TranslatedJCheckBox("Exact", TranslatedComponents.EXACT);
 	
 	public SearchableJTextArea()
 	{
@@ -78,6 +81,19 @@ public class SearchableJTextArea extends JTextArea
 			
 			GlobalHotKeys.keyPressed(keyEvent);
 		}));
+		
+		final Font newFont = getFont().deriveFont((float) BytecodeViewer.viewer.getFontSize());
+		
+		//set number-bar font
+		setFont(newFont);
+		
+		SwingUtilities.invokeLater(()-> {
+			//attach CTRL + Mouse Wheel Zoom
+			attachCtrlMouseWheelZoom();
+			
+			//set text font
+			setFont(newFont);
+		});
 	}
 	
 	public void search(String search, boolean forwardSearchDirection, boolean caseSensitiveSearch)
@@ -88,6 +104,41 @@ public class SearchableJTextArea extends JTextArea
 	public void highlight(String pattern, boolean caseSensitiveSearch)
 	{
 		JTextAreaUtils.highlight(this, pattern, caseSensitiveSearch);
+	}
+	
+	public void attachCtrlMouseWheelZoom()
+	{
+		//get the existing scroll event
+		MouseWheelListener ogListener = scrollPane.getMouseWheelListeners().length > 0 ?
+				scrollPane.getMouseWheelListeners()[0] : null;
+		
+		//remove the existing event
+		if(ogListener != null)
+			scrollPane.removeMouseWheelListener(ogListener);
+		
+		//add a new event
+		scrollPane.addMouseWheelListener(e ->
+		{
+			if (getText().isEmpty())
+				return;
+			
+			if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0)
+			{
+				Font font = getFont();
+				int size = font.getSize();
+				
+				if (e.getWheelRotation() > 0) //Up
+					setFont(new Font(font.getName(), font.getStyle(), --size >= 2 ? --size : 2));
+				else //Down
+					setFont(new Font(font.getName(), font.getStyle(), ++size));
+				
+				e.consume();
+			}
+			else if(ogListener != null)
+			{
+				ogListener.mouseWheelMoved(e);
+			}
+		});
 	}
 	
 	public JScrollPane getScrollPane()

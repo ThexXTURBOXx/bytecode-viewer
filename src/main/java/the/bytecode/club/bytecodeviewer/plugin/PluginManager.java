@@ -8,6 +8,7 @@ import the.bytecode.club.bytecodeviewer.api.Plugin;
 import the.bytecode.club.bytecodeviewer.api.PluginConsole;
 import the.bytecode.club.bytecodeviewer.gui.components.JFrameConsoleTabbed;
 import the.bytecode.club.bytecodeviewer.plugin.strategies.*;
+import the.bytecode.club.bytecodeviewer.translation.TranslatedStrings;
 import the.bytecode.club.bytecodeviewer.util.MiscUtils;
 
 /***************************************************************************
@@ -131,7 +132,11 @@ public final class PluginManager
         }
     
         console.setConsoleID(id);
-        activeTabbedConsole.addConsole(console.getComponent(0), activePlugin.activeContainer.name);
+        
+        final String name = (activePlugin == null || activePlugin.activeContainer == null)
+                ? ("#" + (activeTabbedConsole.getTabbedPane().getTabCount() + 1)) : activePlugin.activeContainer.name;
+        
+        activeTabbedConsole.addConsole(console.getComponent(0), name);
     }
 
     public static void register(String name, PluginLaunchStrategy strat) {
@@ -163,7 +168,7 @@ public final class PluginManager
 
         @Override
         public String getDescription() {
-            return "BCV Plugins";
+            return TranslatedStrings.SELECT_EXTERNAL_PLUGIN_DESCRIPTION.toString();
         }
     }
 }

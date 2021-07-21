@@ -3,12 +3,16 @@ package the.bytecode.club.bytecodeviewer.util;
 import the.bytecode.club.bytecodeviewer.BytecodeViewer;
 import the.bytecode.club.bytecodeviewer.Configuration;
 import the.bytecode.club.bytecodeviewer.gui.components.FileChooser;
-import the.bytecode.club.bytecodeviewer.gui.components.MultipleChoiceDialogue;
+import the.bytecode.club.bytecodeviewer.gui.components.MultipleChoiceDialog;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedStrings;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+
+import static the.bytecode.club.bytecodeviewer.gui.components.FileChooser.EVERYTHING;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -32,7 +36,7 @@ import java.io.File;
  * @author Konloch
  * @since 7/1/2021
  */
-public class DialogueUtils
+public class DialogUtils
 {
 	/**
 	 * Asks if the user would like to overwrite the file
@@ -48,11 +52,11 @@ public class DialogueUtils
 	public static boolean canOverwriteFile(File file) {
 		if (file.exists())
 		{
-			MultipleChoiceDialogue dialogue = new MultipleChoiceDialogue("Bytecode Viewer - Overwrite File",
+			MultipleChoiceDialog dialog = new MultipleChoiceDialog("Bytecode Viewer - Overwrite File",
 					"Are you sure you wish to overwrite this existing file?",
 					new String[]{TranslatedStrings.YES.toString(), TranslatedStrings.NO.toString()});
 			
-			if (dialogue.promptChoice() == 0) {
+			if (dialog.promptChoice() == 0) {
 				file.delete();
 				
 				return true;
@@ -86,13 +90,36 @@ public class DialogueUtils
 	 */
 	public static File fileChooser(String title, String description, File directory, FileFilter filter, OnOpenEvent onOpen, String... extensions)
 	{
-		final JFileChooser fc = new FileChooser(directory,
+		HashSet<String> extensionSet = new HashSet<>(Arrays.asList(extensions));
+		
+		final JFileChooser fc = new FileChooser(true,
+				directory,
 				title,
 				description,
 				extensions);
 		
 		if(filter != null)
 			fc.setFileFilter(filter);
+		else
+			fc.setFileFilter(new FileFilter()
+			{
+				@Override
+				public boolean accept(File f)
+				{
+					if (f.isDirectory())
+						return true;
+					
+					if(extensions[0].equals(EVERYTHING))
+						return true;
+					
+					return extensionSet.contains(MiscUtils.extension(f.getAbsolutePath()));
+				}
+				
+				@Override
+				public String getDescription() {
+					return description;
+				}
+			});
 		
 		int returnVal = fc.showOpenDialog(BytecodeViewer.viewer);
 		if (returnVal == JFileChooser.APPROVE_OPTION)

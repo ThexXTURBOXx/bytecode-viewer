@@ -8,27 +8,27 @@ import javax.swing.*;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import me.konloch.kontainer.io.DiskReader;
 import org.apache.commons.io.FileUtils;
 import org.objectweb.asm.tree.ClassNode;
+
+import me.konloch.kontainer.io.DiskReader;
+
 import the.bytecode.club.bytecodeviewer.bootloader.Boot;
 import the.bytecode.club.bytecodeviewer.api.BCV;
 import the.bytecode.club.bytecodeviewer.api.ExceptionUI;
+import the.bytecode.club.bytecodeviewer.gui.MainViewerGUI;
 import the.bytecode.club.bytecodeviewer.gui.components.*;
 import the.bytecode.club.bytecodeviewer.gui.resourceviewer.TabbedPane;
 import the.bytecode.club.bytecodeviewer.gui.resourceviewer.viewer.ClassViewer;
-import the.bytecode.club.bytecodeviewer.gui.MainViewerGUI;
 import the.bytecode.club.bytecodeviewer.gui.resourceviewer.viewer.ResourceViewer;
-import the.bytecode.club.bytecodeviewer.obfuscators.mapping.Refactorer;
 import the.bytecode.club.bytecodeviewer.plugin.PluginWriter;
-import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
+import the.bytecode.club.bytecodeviewer.obfuscators.mapping.Refactorer;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedStrings;
-import the.bytecode.club.bytecodeviewer.util.*;
+import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
 import the.bytecode.club.bytecodeviewer.resources.importing.ImportResource;
+import the.bytecode.club.bytecodeviewer.util.*;
 
 import static the.bytecode.club.bytecodeviewer.Constants.*;
-import static the.bytecode.club.bytecodeviewer.Settings.addRecentPlugin;
-import static the.bytecode.club.bytecodeviewer.util.MiscUtils.guessLanguage;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -75,8 +75,6 @@ import static the.bytecode.club.bytecodeviewer.util.MiscUtils.guessLanguage;
  *          This is caused by the ctrlMouseWheelZoom code, a temporary patch is just removing it worst case
  *      + Versioning and updating need to be fixed
  *      + Fix classfile searcher
- *      + JHexEditor in dark mode is nearly unreadable -> Theme support
- *      + JHexEditor doesn't apply font size from settings
  *
  * TODO API BUGS:
  *      + All of the plugins that modify code need to include BytecodeViewer.updateAllClassNodeByteArrays();
@@ -91,11 +89,11 @@ import static the.bytecode.club.bytecodeviewer.util.MiscUtils.guessLanguage;
  *      + Fix hook inject for EZ-Injection
  *
  * TODO FEATURES:
- *      + On refresh save position
+ *      + System Consoles and Error Dialogs should create a new tab rather than a new window
+ *      + On refresh save scroll position
  *      + Option to only compile currently viewed class (true by default)
  *      + CLI Headless needs to be supported
  *      + Add stackmapframes to bytecode decompiler
- *      + Add JEB decompiler optionally, requires them to add jeb library jar
  *      + Add https://github.com/exbin/bined as the replacement Hed Viewer/Editor
  *      + Make the decompilers launch in a separate process
  *      + Make it use that global last used file folder inside of export as jar
@@ -108,6 +106,7 @@ import static the.bytecode.club.bytecodeviewer.util.MiscUtils.guessLanguage;
  *
  *  TODO IDEAS:
  *      + App Bundle Support
+ *      + Add JEB decompiler optionally, requires them to add jeb library jar
  *      + Add the setting to force all non-class resources to be opened with the Hex Viewer
  *          ^ Optionally a right-click menu open-as would work inside of the resource list
  *      + Allow class files to be opened without needing the .class extension
@@ -152,7 +151,7 @@ public class BytecodeViewer
     private static final Thread pingBack = new Thread(new PingBack(), "Pingback");
     private static final Thread installFatJar = new Thread(new InstallFatJar(), "Install Fat-Jar");
     private static final Thread bootCheck = new Thread(new BootCheck(), "Boot Check");
-
+    
     /**
      * Main startup
      *
@@ -164,8 +163,8 @@ public class BytecodeViewer
         
         //welcome message
         System.out.print("Bytecode Viewer " + VERSION);
-        if(FAT_JAR)
-            System.out.print(" [FatJar]");
+        if (FAT_JAR)
+            System.out.print(" [Fat Jar]");
         
         System.out.println(" - Created by @Konloch");
         System.out.println("https://bytecodeviewer.com - https://the.bytecode.club");
@@ -177,6 +176,7 @@ public class BytecodeViewer
         {
             //precache settings file
             SettingsSerializer.preloadSettingsFile();
+            
             //setup look and feel
             Configuration.lafTheme.setLAF();
             
@@ -192,14 +192,14 @@ public class BytecodeViewer
             Configuration.bootState = Configuration.BootState.SETTINGS_LOADED;
             
             //set translation language
-            if(!Settings.hasSetLanguageAsSystemLanguage)
-                MiscUtils.setLanguage(guessLanguage());
+            if (!Settings.hasSetLanguageAsSystemLanguage)
+                MiscUtils.setLanguage(MiscUtils.guessLanguage());
     
             //handle CLI
             int CLI = CommandLineInput.parseCommandLine(args);
             if (CLI == CommandLineInput.STOP)
                 return;
-
+    
             //load with shaded libraries
             if (FAT_JAR)
             {
@@ -228,7 +228,7 @@ public class BytecodeViewer
             BytecodeViewer.handleException(e);
         }
     }
-
+    
     /**
      * Boot after all of the libraries have been loaded
      *
@@ -244,16 +244,17 @@ public class BytecodeViewer
         {
             for (Process proc : createdProcesses)
                 proc.destroy();
+            
             SettingsSerializer.saveSettings();
             cleanup();
         }, "Shutdown Hook"));
-
+    
         //setup the viewer
         viewer.calledAfterLoad();
         
         //setup the recent files
         Settings.resetRecentFilesMenu();
-
+    
         //ping back once on first boot to add to global user count
         if (!Configuration.pingback)
         {
@@ -262,18 +263,18 @@ public class BytecodeViewer
         }
         
         //version checking
-        if (viewer.updateCheck.isSelected())
+        if (viewer.updateCheck.isSelected() && !DEV_MODE)
             versionChecker.start();
-
+    
         //show the main UI
         if (!cli)
             viewer.setVisible(true);
-
+    
         //print startup time
         System.out.println("Start up took " + ((System.currentTimeMillis() - Configuration.start) / 1000) + " seconds");
         
         //request focus on GUI for hotkeys on start
-        if(!cli)
+        if (!cli)
             viewer.requestFocus();
         
         //open files from launch args
@@ -289,7 +290,7 @@ public class BytecodeViewer
     public static void addResourceContainer(ResourceContainer container)
     {
         resourceContainers.add(container);
-        SwingUtilities.invokeLater(()->
+        SwingUtilities.invokeLater(() ->
         {
             try {
                 viewer.resourcePane.addResourceContainer(container);
@@ -331,7 +332,7 @@ public class BytecodeViewer
     {
         return BytecodeViewer.viewer.workPane.getActiveResource();
     }
-
+    
     /**
      * Returns the currently opened ClassNode
      *
@@ -341,10 +342,10 @@ public class BytecodeViewer
     {
         return getActiveResource().resource.getResourceClassNode();
     }
-
+    
     /**
      * Returns the ClassNode by the specified name
-     *
+     * <p>
      * TODO anything relying on this should be rewritten to search using the resource container
      *
      * @param name the class name
@@ -356,10 +357,11 @@ public class BytecodeViewer
         for (ResourceContainer container : resourceContainers)
         {
             ClassNode node = container.getClassNode(name);
-            if(node != null)
+            
+            if (node != null)
                 return node;
         }
-
+    
         return null;
     }
     
@@ -371,20 +373,21 @@ public class BytecodeViewer
         for (ResourceContainer container : resourceContainers)
             if (container.name.equals(name))
                 return container;
-
+    
         return null;
     }
     
     /**
      * Returns all of the loaded resource containers
      */
-    public static List<ResourceContainer> getResourceContainers() {
+    public static List<ResourceContainer> getResourceContainers()
+    {
         return resourceContainers;
     }
-
+    
     /**
      * Grabs the file contents of the loaded resources.
-     *
+     * <p>
      * TODO anything relying on this should be rewritten to use the resource container's getFileContents
      *
      * @param name the file name
@@ -396,7 +399,7 @@ public class BytecodeViewer
         for (ResourceContainer container : resourceContainers)
             if (container.resourceFiles.containsKey(name))
                 return container.resourceFiles.get(name);
-
+    
         return null;
     }
     
@@ -407,14 +410,14 @@ public class BytecodeViewer
     {
         return ClassFileUtils.getClassFileBytes(clazz);
     }
-
+    
     /**
      * Gets all of the loaded classes as an array list
      *
      * TODO: remove this and replace it with:
-     *         BytecodeViewer.getResourceContainers().forEach(container -> {
-     *             execute(new ArrayList<>(container.resourceClasses.values()));
-     *         });
+     * BytecodeViewer.getResourceContainers().forEach(container -> {
+     *      execute(new ArrayList<>(container.resourceClasses.values()));
+     * });
      *
      * @return the loaded classes as an array list
      */
@@ -422,30 +425,33 @@ public class BytecodeViewer
     public static ArrayList<ClassNode> getLoadedClasses()
     {
         ArrayList<ClassNode> a = new ArrayList<>();
-
+    
         for (ResourceContainer container : resourceContainers)
             for (ClassNode c : container.resourceClasses.values())
                 if (!a.contains(c))
                     a.add(c);
-
+    
         return a;
     }
-
+    
     /**
      * Called any time refresh is called to automatically compile all of the compilable panes that're opened.
      */
     public static boolean autoCompileSuccessful()
     {
-        if(!BytecodeViewer.viewer.autoCompileOnRefresh.isSelected())
+        if (!BytecodeViewer.viewer.autoCompileOnRefresh.isSelected())
             return true;
         
-        try {
+        try
+        {
             return compile(false, false);
-        } catch (NullPointerException ignored) {
+        }
+        catch (NullPointerException ignored)
+        {
             return false;
         }
     }
-
+    
     /**
      * Compile all of the compilable panes that're opened.
      *
@@ -464,27 +470,27 @@ public class BytecodeViewer
             {
                 ClassViewer cv = (ClassViewer) c;
                 
-                if(noErrors && !cv.bytecodeViewPanel1.compile())
+                if (noErrors && !cv.bytecodeViewPanel1.compile())
                     noErrors = false;
-                if(noErrors && !cv.bytecodeViewPanel2.compile())
+                if (noErrors && !cv.bytecodeViewPanel2.compile())
                     noErrors = false;
-                if(noErrors && !cv.bytecodeViewPanel3.compile())
+                if (noErrors && !cv.bytecodeViewPanel3.compile())
                     noErrors = false;
                 
-                if(cv.bytecodeViewPanel1.textArea != null && cv.bytecodeViewPanel1.textArea.isEditable())
+                if (cv.bytecodeViewPanel1.textArea != null && cv.bytecodeViewPanel1.textArea.isEditable())
                     actuallyTried = true;
-                if(cv.bytecodeViewPanel2.textArea != null && cv.bytecodeViewPanel2.textArea.isEditable())
+                if (cv.bytecodeViewPanel2.textArea != null && cv.bytecodeViewPanel2.textArea.isEditable())
                     actuallyTried = true;
-                if(cv.bytecodeViewPanel3.textArea != null && cv.bytecodeViewPanel3.textArea.isEditable())
+                if (cv.bytecodeViewPanel3.textArea != null && cv.bytecodeViewPanel3.textArea.isEditable())
                     actuallyTried = true;
             }
         }
-
+    
         if (message)
         {
             if (actuallyTried)
             {
-                if(noErrors && successAlert)
+                if (noErrors && successAlert)
                     BytecodeViewer.showMessage("Compiled Successfully.");
             }
             else
@@ -496,7 +502,7 @@ public class BytecodeViewer
         BytecodeViewer.updateBusyStatus(false);
         return true;
     }
-
+    
     /**
      * Opens a file, optional if it should append to the recent files menu
      *
@@ -513,13 +519,13 @@ public class BytecodeViewer
     
             SettingsSerializer.saveSettingsAsync();
         }
-
+    
         BytecodeViewer.updateBusyStatus(true);
         Configuration.needsReDump = true;
         Thread t = new Thread(new ImportResource(files), "Import Resource");
         t.start();
     }
-
+    
     /**
      * Starts the specified plugin
      *
@@ -539,13 +545,15 @@ public class BytecodeViewer
             PluginWriter writer = new PluginWriter(DiskReader.loadAsString(file.getAbsolutePath()), file.getName());
             writer.setSourceFile(file);
             writer.setVisible(true);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             BytecodeViewer.handleException(e);
         }
         
-        addRecentPlugin(file);
+        Settings.addRecentPlugin(file);
     }
-
+    
     /**
      * Send a message to alert the user
      *
@@ -553,9 +561,9 @@ public class BytecodeViewer
      */
     public static void showMessage(String message)
     {
-        BetterJOptionPane.showMessageDialog(viewer, message);
+        ExtendedJOptionPane.showMessageDialog(viewer, message);
     }
-
+    
     /**
      * Send a message to alert the user
      *
@@ -563,7 +571,7 @@ public class BytecodeViewer
      */
     public static String showInput(String message)
     {
-        return BetterJOptionPane.showInputDialog(viewer, message);
+        return ExtendedJOptionPane.showInputDialog(viewer, message);
     }
     
     /**
@@ -672,12 +680,11 @@ public class BytecodeViewer
     {
         if (ask)
         {
-            MultipleChoiceDialogue dialogue = new MultipleChoiceDialogue("Bytecode Viewer - Reset Workspace",
-                    "Are you sure you want to reset the workspace?" +
-                            "\n\rIt will also reset your file navigator and search.",
+            MultipleChoiceDialog dialog = new MultipleChoiceDialog(TranslatedStrings.RESET_TITLE.toString(),
+                    TranslatedStrings.RESET_CONFIRM.toString(),
                     new String[]{TranslatedStrings.YES.toString(), TranslatedStrings.NO.toString()});
         
-            if (dialogue.promptChoice() != 0)
+            if (dialog.promptChoice() != 0)
                 return;
         }
     

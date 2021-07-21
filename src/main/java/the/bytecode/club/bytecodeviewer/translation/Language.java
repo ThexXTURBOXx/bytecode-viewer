@@ -1,9 +1,9 @@
 package the.bytecode.club.bytecodeviewer.translation;
 
 import com.google.gson.reflect.TypeToken;
-import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.collections4.map.LinkedMap;
 import the.bytecode.club.bytecodeviewer.BytecodeViewer;
+import the.bytecode.club.bytecodeviewer.api.BCV;
 import the.bytecode.club.bytecodeviewer.resources.IconResources;
 
 import java.io.IOException;
@@ -108,14 +108,14 @@ public enum Language
 		
 		HashMap<String, String> translationMap = getTranslation();
 		
-		for(Translation translation : Translation.values())
+		for(TranslatedComponents translatedComponents : TranslatedComponents.values())
 		{
-			TranslatedComponentReference text = translation.getTranslatedComponentReference();
+			TranslatedComponentReference text = translatedComponents.getTranslatedComponentReference();
 			
 			//skip translating if the language config is missing the translation key
 			if(!translationMap.containsKey(text.key))
 			{
-				System.err.println("MISSING TRANSLATION KEY: " + text.key);
+				BCV.logE(true, resourcePath + " -> " + text.key + " - Missing Translation Key");
 				continue;
 			}
 			
@@ -130,15 +130,15 @@ public enum Language
 			
 			//check if translation key has been assigned to a component,
 			//on fail print an error alerting the devs
-			if(translation.getTranslatedComponentReference().runOnUpdate.isEmpty())
+			if(translatedComponents.getTranslatedComponentReference().runOnUpdate.isEmpty())
 					//&& TranslatedStrings.nameSet.contains(translation.name()))
 			{
-				System.err.println("Translation Reference " + translation.name() + " is missing component attachment, skipping...");
+				BCV.logE(true, "TranslatedComponents:" + translatedComponents.name() + " is missing component attachment, skipping...");
 				continue;
 			}
 			
 			//trigger translation event
-			translation.getTranslatedComponentReference().translate();
+			translatedComponents.getTranslatedComponentReference().translate();
 		}
 	}
 	
@@ -171,12 +171,12 @@ public enum Language
 				new TypeToken<LinkedMap<String, String>>(){}.getType());
 		
 		HashSet<String> existingKeys = new HashSet<>();
-		for(Translation t : Translation.values())
+		for(TranslatedComponents t : TranslatedComponents.values())
 			existingKeys.add(t.name());
 		
 		for(String key : translationMap.keySet())
 			if(!existingKeys.contains(key))
-				System.err.println(key + ",");
+				BCV.logE(true, key + ",");
 	}
 	
 	public String getResourcePath()

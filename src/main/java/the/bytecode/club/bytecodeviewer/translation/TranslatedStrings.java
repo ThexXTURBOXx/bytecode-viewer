@@ -1,5 +1,7 @@
 package the.bytecode.club.bytecodeviewer.translation;
 
+import the.bytecode.club.bytecodeviewer.api.BCV;
+
 import java.io.IOException;
 import java.util.HashSet;
 
@@ -22,7 +24,9 @@ import java.util.HashSet;
  ***************************************************************************/
 
 /**
- * Constant-like strings not associated with any specific JComponent
+ * Translation keys for constant strings (does not change the component text on language change).
+ *
+ * You need to add your translation key here if it is not tied to any specific component (Console, Dialogs)
  *
  * @author Konloch
  * @since 7/6/2021
@@ -30,9 +34,12 @@ import java.util.HashSet;
 
 public enum TranslatedStrings
 {
+	PRODUCT("BCV"),
 	PRODUCTNAME("BytecodeViewer"),
 	PRODUCT_NAME("Bytecode Viewer"),
 	PRODUCT_H_NAME("Bytecode-Viewer"),
+	WEBSITE("https://bytecodeviewer.com"),
+	TBC("https://the.bytecode.club"),
 	
 	EDITABLE,
 	JAVA,
@@ -51,6 +58,22 @@ public enum TranslatedStrings
 	DISASSEMBLER,
 	RESULTS,
 	SEARCH,
+	
+	
+	RELOAD_RESOURCES_TITLE,
+	RELOAD_RESOURCES_CONFIRM,
+	SELECT_FILE_TITLE,
+	SELECT_FILE_DESCRIPTION,
+	SELECT_EXTERNAL_PLUGIN_TITLE,
+	SELECT_EXTERNAL_PLUGIN_DESCRIPTION,
+	FOREIGN_LIBRARY_WARNING,
+	RESET_TITLE,
+	RESET_CONFIRM,
+	EXIT_TITLE,
+	EXIT_CONFIRM,
+	ABOUT_TITLE,
+	PLUGIN_CONSOLE_TITLE,
+	
 	
 	YES,
 	NO,
@@ -121,13 +144,18 @@ public enum TranslatedStrings
 	{
 		if(text == null)
 		{
-			System.err.println("TranslatedStrings:"+name() + " - Missing Translation");
+			BCV.logE(true, "TranslatedStrings:"+name() + " - Missing Translation");
 			text = TEXT_ERROR;
 		}
 		
-		text = text.replace("%PRODUCTNAME%", PRODUCTNAME.toString())
-				.replace("%PRODUCT_NAME%", PRODUCT_NAME.toString())
-				.replace("%PRODUCT-NAME%", PRODUCT_H_NAME.toString());
+		//TODO this should be tokenized against the TranslatedStrings enum
+		text = text.replace("{PRODUCTNAME}", PRODUCTNAME.toString())
+				.replace("{PRODUCT_NAME}", PRODUCT_NAME.toString())
+				.replace("{PRODUCT-NAME}", PRODUCT_H_NAME.toString())
+				.replace("{PRODUCT}", PRODUCT.toString())
+				.replace("{TBC}", TBC.toString())
+				.replace("{WEBSITE}", WEBSITE.toString())
+		;
 		
 		this.text = text;
 	}

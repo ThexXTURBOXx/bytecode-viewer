@@ -2,13 +2,14 @@ package the.bytecode.club.bytecodeviewer.gui.components;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import the.bytecode.club.bytecodeviewer.BytecodeViewer;
 import the.bytecode.club.bytecodeviewer.Configuration;
 import the.bytecode.club.bytecodeviewer.GlobalHotKeys;
 import the.bytecode.club.bytecodeviewer.resources.IconResources;
 import the.bytecode.club.bytecodeviewer.gui.components.listeners.PressKeyListener;
 import the.bytecode.club.bytecodeviewer.gui.components.listeners.ReleaseKeyListener;
 import the.bytecode.club.bytecodeviewer.gui.theme.LAFTheme;
-import the.bytecode.club.bytecodeviewer.translation.Translation;
+import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
 import the.bytecode.club.bytecodeviewer.translation.components.TranslatedJCheckBox;
 import the.bytecode.club.bytecodeviewer.util.JTextAreaUtils;
 
@@ -48,7 +49,7 @@ public class SearchableRSyntaxTextArea extends RSyntaxTextArea
 	private final RTextScrollPane scrollPane = new RTextScrollPane(this);
 	private final JPanel searchPanel = new JPanel(new BorderLayout());
 	private final JTextField searchInput = new JTextField();
-	private final JCheckBox caseSensitiveSearch = new TranslatedJCheckBox("Exact", Translation.EXACT);
+	private final JCheckBox caseSensitiveSearch = new TranslatedJCheckBox("Exact", TranslatedComponents.EXACT);
 	private final JLabel titleHeader = new JLabel("");
 	private final Color darkScrollBackground = new Color(0x3c3f41);
 	private final Color darkScrollForeground = new Color(0x575859);
@@ -58,21 +59,21 @@ public class SearchableRSyntaxTextArea extends RSyntaxTextArea
 	
 	public SearchableRSyntaxTextArea()
 	{
-		if(Configuration.lafTheme == LAFTheme.DARK || Configuration.lafTheme == LAFTheme.SOLARIZED_DARK)
-		{
-			//this fixes the white border on the jScrollBar panes
-			scrollPane.getHorizontalScrollBar().setBackground(darkScrollBackground);
-			scrollPane.getHorizontalScrollBar().setForeground(darkScrollForeground);
-			scrollPane.getVerticalScrollBar().setBackground(darkScrollBackground);
-			scrollPane.getVerticalScrollBar().setForeground(darkScrollForeground);
-		}
-		else if(Configuration.lafTheme == LAFTheme.HIGH_CONTRAST_DARK)
+		if(Configuration.lafTheme == LAFTheme.HIGH_CONTRAST_DARK)
 		{
 			//this fixes the white border on the jScrollBar panes
 			scrollPane.getHorizontalScrollBar().setBackground(blackScrollBackground);
 			scrollPane.getHorizontalScrollBar().setForeground(blackScrollForeground);
 			scrollPane.getVerticalScrollBar().setBackground(blackScrollBackground);
 			scrollPane.getVerticalScrollBar().setForeground(blackScrollForeground);
+		}
+		else if(Configuration.lafTheme.isDark())
+		{
+			//this fixes the white border on the jScrollBar panes
+			scrollPane.getHorizontalScrollBar().setBackground(darkScrollBackground);
+			scrollPane.getHorizontalScrollBar().setForeground(darkScrollForeground);
+			scrollPane.getVerticalScrollBar().setBackground(darkScrollBackground);
+			scrollPane.getVerticalScrollBar().setForeground(darkScrollForeground);
 		}
 		
 		setAntiAliasingEnabled(true);
@@ -113,8 +114,19 @@ public class SearchableRSyntaxTextArea extends RSyntaxTextArea
 			GlobalHotKeys.keyPressed(keyEvent);
 		}));
 		
-		//attach CTRL + Mouse Wheel Zoom
-		SwingUtilities.invokeLater(this::attachCtrlMouseWheelZoom);
+		final Font newFont = getFont().deriveFont((float) BytecodeViewer.viewer.getFontSize());
+		
+		//set number-bar font
+		setFont(newFont);
+		
+		SwingUtilities.invokeLater(()-> {
+			//attach CTRL + Mouse Wheel Zoom
+			attachCtrlMouseWheelZoom();
+			
+			//set text font
+			setFont(newFont);
+		});
+		
 	}
 	
 	public void search(String search, boolean forwardSearchDirection, boolean caseSensitiveSearch)

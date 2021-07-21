@@ -36,25 +36,36 @@ import java.util.ArrayList;
  */
 public class JavascriptPluginLaunchStrategy implements PluginLaunchStrategy
 {
-    public static final String firstPickEngine = "rhino";
-    public static final String fallBackEngine = "nashorn";
+    //attempt to use nashorn
+    public static final String firstPickEngine = "nashorn";
+    //fallback to graal.js
+    public static final String fallBackEngine = "graal.js";
     
     @Override
     public Plugin run(File file) throws Throwable
     {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName(firstPickEngine);
-
+    
+        //nashorn compatability with graal
         if (engine == null)
+        {
             engine = manager.getEngineByName(fallBackEngine);
-        
-        if (engine == null)
-            throw new Exception("Cannot find Javascript script engine! Please contact Konloch.");
+            
+            if (engine == null)
+                throw new Exception("Cannot find Javascript script engine! Please contact Konloch.");
+            
+            Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
+            bindings.put("polyglot.js.allowHostAccess", true);
+            bindings.put("polyglot.js.allowAllAccess", true);
+            bindings.put("polyglot.js.allowHostClassLookup", true);
+        }
 
         Reader reader = new FileReader(file);
         engine.eval(reader);
     
         ScriptEngine finalEngine = engine;
+        
         return new Plugin()
         {
             @Override

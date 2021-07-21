@@ -4,7 +4,6 @@ import the.bytecode.club.bytecodeviewer.BytecodeViewer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Method;
 
 import static javax.swing.JOptionPane.*;
 
@@ -17,7 +16,7 @@ import static javax.swing.JOptionPane.*;
  * @since 7/4/2021
  */
 
-public class BetterJOptionPane
+public class ExtendedJOptionPane
 {
 	public static void showMessageDialog(Component parentComponent,
 	                                     Object message) throws HeadlessException
@@ -86,7 +85,7 @@ public class BetterJOptionPane
 				getRootFrame() : parentComponent).getComponentOrientation());
 		
 		int style = styleFromMessageType(messageType);
-		JDialog dialog = createNewJDialogue(parentComponent, pane, title, style, (d)->
+		JDialog dialog = createNewJDialog(parentComponent, pane, title, style, (d)->
 		{
 			pane.selectInitialValue();
 		});
@@ -130,7 +129,7 @@ public class BetterJOptionPane
 				getRootFrame() : parentComponent).getComponentOrientation());
 		
 		int style = styleFromMessageType(messageType);
-		JDialog dialog = createNewJDialogue(parentComponent, pane, title, style, (d)->
+		JDialog dialog = createNewJDialog(parentComponent, pane, title, style, (d)->
 		{
 			pane.selectInitialValue();
 		});
@@ -145,14 +144,14 @@ public class BetterJOptionPane
 		return value;
 	}
 	
-	public static void showJPanelDialogue(Component parentComponent, JScrollPane panel, int minimumHeight, OnCreate onCreate)
+	public static void showJPanelDialog(Component parentComponent, JScrollPane panel, int minimumHeight, OnCreate onCreate)
 			throws HeadlessException
 	{
 		//create a new option pane with a empty text and just 'ok'
 		JOptionPane pane = new JOptionPane("");
 		pane.add(panel, 0);
 
-		JDialog dialog = createNewJDialogue(parentComponent, pane, panel.getName(), ERROR_MESSAGE, (d)->
+		JDialog dialog = createNewJDialog(parentComponent, pane, panel.getName(), ERROR_MESSAGE, (d)->
 		{
 			int newHeight = Math.min(minimumHeight, d.getHeight());
 			d.setMinimumSize(new Dimension(d.getWidth(), newHeight));
@@ -163,7 +162,7 @@ public class BetterJOptionPane
 		});
 	}
 	
-	private static JDialog createNewJDialogue(Component parentComponent, JOptionPane pane, String title, int style, OnCreate onCreate)
+	private static JDialog createNewJDialog(Component parentComponent, JOptionPane pane, String title, int style, OnCreate onCreate)
 	{
 		JDialog dialog = pane.createDialog(parentComponent, title);
 		if (JDialog.isDefaultLookAndFeelDecorated()) {
@@ -175,13 +174,13 @@ public class BetterJOptionPane
 			}
 		}
 
-		//check if the dialogue is in a poor location, attempt to correct
+		onCreate.onCreate(dialog);
+		
+		//check if the dialog is in a poor location, attempt to correct
 		if (dialog.getLocation().getY() == 0 || dialog.getLocation().getY() == 1)
 			dialog.setLocationRelativeTo(null); //TODO check if BytecodeViewer.viewer is better on multi monitor for this edgecase
 		else
 			dialog.setLocationRelativeTo(BytecodeViewer.viewer);
-
-		onCreate.onCreate(dialog);
 		
 		dialog.show();
 		dialog.dispose();

@@ -8,10 +8,10 @@ import the.bytecode.club.bytecodeviewer.Configuration;
 import the.bytecode.club.bytecodeviewer.resources.IconResources;
 import the.bytecode.club.bytecodeviewer.gui.components.FileChooser;
 import the.bytecode.club.bytecodeviewer.gui.components.SearchableRSyntaxTextArea;
-import the.bytecode.club.bytecodeviewer.translation.Translation;
+import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
 import the.bytecode.club.bytecodeviewer.translation.components.TranslatedJMenu;
 import the.bytecode.club.bytecodeviewer.translation.components.TranslatedJMenuItem;
-import the.bytecode.club.bytecodeviewer.util.DialogueUtils;
+import the.bytecode.club.bytecodeviewer.util.DialogUtils;
 import the.bytecode.club.bytecodeviewer.util.MiscUtils;
 import the.bytecode.club.bytecodeviewer.util.SyntaxLanguage;
 
@@ -67,11 +67,11 @@ public class PluginWriter extends JFrame
 		JButton run = new JButton("Run");
 		
 		JMenuBar menuBar = new JMenuBar();
-		JMenu menu = new TranslatedJMenu("File", Translation.FILE);
-		JMenuItem menuOpen = new TranslatedJMenuItem("Open...", Translation.OPEN);
-		JMenuItem menuRun = new TranslatedJMenuItem("Run", Translation.RUN);
-		menuSaveAs = new TranslatedJMenuItem("Save As...", Translation.SAVE_AS);
-		menuSave = new TranslatedJMenuItem("Save...", Translation.SAVE);
+		JMenu menu = new TranslatedJMenu("File", TranslatedComponents.FILE);
+		JMenuItem menuOpen = new TranslatedJMenuItem("Open...", TranslatedComponents.OPEN);
+		JMenuItem menuRun = new TranslatedJMenuItem("Run", TranslatedComponents.RUN);
+		menuSaveAs = new TranslatedJMenuItem("Save As...", TranslatedComponents.SAVE_AS);
+		menuSave = new TranslatedJMenuItem("Save...", TranslatedComponents.SAVE);
 		menuSave.setVisible(false);
 		
 		menuBar.add(menu);
@@ -101,7 +101,7 @@ public class PluginWriter extends JFrame
 	
 	public void openPlugin()
 	{
-		final File file = DialogueUtils.fileChooser("Select External Plugin",
+		final File file = DialogUtils.fileChooser("Select External Plugin",
 				"External Plugin",
 				Configuration.getLastPluginDirectory(),
 				PluginManager.fileFilter(),
@@ -177,7 +177,7 @@ public class PluginWriter extends JFrame
 					if (!path.endsWith("." + ext))
 						path = path + "." + ext;
 					
-					if (!DialogueUtils.canOverwriteFile(path))
+					if (!DialogUtils.canOverwriteFile(path))
 						return;
 					
 					//swap from save-as to having a defined path each save
