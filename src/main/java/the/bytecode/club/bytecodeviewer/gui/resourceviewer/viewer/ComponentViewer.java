@@ -1,10 +1,10 @@
-package the.bytecode.club.bytecodeviewer.bootloader.util;
+package the.bytecode.club.bytecodeviewer.gui.resourceviewer.viewer;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import org.objectweb.asm.tree.ClassNode;
+import the.bytecode.club.bytecodeviewer.BytecodeViewer;
+import the.bytecode.club.bytecodeviewer.resources.Resource;
+
+import javax.swing.*;
+import java.awt.*;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -25,28 +25,40 @@ import org.objectweb.asm.tree.ClassNode;
  ***************************************************************************/
 
 /**
- * @author Bibl (don't ban me pls)
- * @created 25 May 2015 (actually before this)
+ * This represents a component opened as a tab
+ *
+ * @author Konloch
+ * @since 7/23/2021
  */
-public class ClassHelper {
 
-    public static Map<String, ClassNode> convertToMap(Collection<ClassNode> classes) {
-        Map<String, ClassNode> map = new HashMap<>();
-        for (ClassNode cn : classes) {
-            map.put(cn.name, cn);
-        }
-        return map;
-    }
-
-    public static <T, K> Map<T, K> copyOf(Map<T, K> src) {
-        Map<T, K> dst = new HashMap<>();
-        copy(src, dst);
-        return dst;
-    }
-
-    public static <T, K> void copy(Map<T, K> src, Map<T, K> dst) {
-        for (Entry<T, K> e : src.entrySet()) {
-            dst.put(e.getKey(), e.getValue());
-        }
-    }
+public class ComponentViewer extends ResourceViewer
+{
+	private Component component;
+	private static final String containerName = "internalComponent.";
+	
+	public ComponentViewer(String title, Component component)
+	{
+		super(new Resource(title, containerName + title, null));
+		
+		this.component = component;
+		
+		setLayout(new BorderLayout());
+		setName(title);
+		add(component, BorderLayout.CENTER);
+	}
+	
+	public static ComponentViewer addComponentAsTab(String title, Component c)
+	{
+		String workingName = containerName + title;
+		ComponentViewer componentViewer = new ComponentViewer(title, c);
+		BytecodeViewer.viewer.workPane.addResourceToTab(componentViewer,
+				workingName, containerName, title);
+		
+		return componentViewer;
+	}
+	
+	@Override
+	public void refresh(JButton button) {
+		//TODO add a refresh event so the component can be updated
+	}
 }

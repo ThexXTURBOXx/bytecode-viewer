@@ -1,6 +1,8 @@
-package the.bytecode.club.bytecodeviewer.bootloader.util.nullpermablehashmap;
+package the.bytecode.club.bytecodeviewer.bootloader;
 
-import java.util.HashMap;
+import the.bytecode.club.bytecodeviewer.bootloader.Boot;
+
+import static the.bytecode.club.bytecodeviewer.Constants.AUTOMATIC_LIBRARY_UPDATING;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -21,29 +23,37 @@ import java.util.HashMap;
  ***************************************************************************/
 
 /**
- * @author Bibl (don't ban me pls)
- * @created ages ago
+ * Downloads & installs the krakatau & enjarify zips
+ *
+ * Alternatively if OFFLINE_MODE is enabled it will drop the Krakatau and Enjarify versions supplied with BCV
+ *
+ * @author Konloch
+ * @since 7/6/2021
  */
-public class NullPermeableHashMap<K, V> extends HashMap<K, V> {
-
-    private static final long serialVersionUID = 1L;
-
-    private final ValueCreator<V> creator;
-
-    public NullPermeableHashMap(ValueCreator<V> creator) {
-        this.creator = creator;
-    }
-
-    public NullPermeableHashMap() {
-        this(new NullCreator<>());
-    }
-
-    public V getNonNull(K k) {
-        V val = get(k);
-        if (val == null) {
-            val = creator.create();
-            put(k, val);
-        }
-        return val;
-    }
+public class InstallFatJar implements Runnable
+{
+	@Override
+	public void run()
+	{
+		try
+		{
+			if (AUTOMATIC_LIBRARY_UPDATING)
+			{
+				Boot.populateUrlList();
+				Boot.populateLibsDirectory();
+				Boot.downloadZipsOnly();
+				Boot.checkKrakatau();
+				Boot.checkEnjarify();
+			}
+			else
+			{
+				Boot.dropKrakatau();
+				Boot.dropEnjarify();
+			}
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+	}
 }

@@ -1,7 +1,6 @@
-package the.bytecode.club.bytecodeviewer.bootloader.util.nullpermablehashmap;
+package the.bytecode.club.bytecodeviewer.bootloader.classtree.nullpermablehashmap;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -23,12 +22,28 @@ import java.util.Set;
 
 /**
  * @author Bibl (don't ban me pls)
- * @created 25 May 2015 (actually before this)
+ * @created ages ago
  */
-public class SetCreator<T> implements ValueCreator<Set<T>> {
+public class NullPermeableHashMap<K, V> extends HashMap<K, V> {
 
-    @Override
-    public Set<T> create() {
-        return new HashSet<>();
+    private static final long serialVersionUID = 1L;
+
+    private final ValueCreator<V> creator;
+
+    public NullPermeableHashMap(ValueCreator<V> creator) {
+        this.creator = creator;
+    }
+
+    public NullPermeableHashMap() {
+        this(new NullCreator<>());
+    }
+
+    public V getNonNull(K k) {
+        V val = get(k);
+        if (val == null) {
+            val = creator.create();
+            put(k, val);
+        }
+        return val;
     }
 }

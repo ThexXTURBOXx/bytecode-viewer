@@ -134,6 +134,8 @@ public class JFrameConsole extends JFrame
 			//TODO if two consoles are ran at the same time and exceed the maximum this file will be overwritten
 			
 			final File tempFile = new File(tempDirectory, "console_" + consoleID + ".log");
+			
+			//TODO this needs to be rewritten, it doesn't work for a plugin that causes multiple exception UIs
 			new Thread(()->
 			{
 				//save to disk
@@ -143,7 +145,9 @@ public class JFrameConsole extends JFrame
 			//trim
 			int skipped = len - max;
 			String trimmed = s.substring(0, max);
-			trimmed = ("WARNING: Skipping " + skipped + " chars, allowing " + max + "\n\r")
+			
+			if(!trimmed.startsWith("WARNING: Skipping"))
+				trimmed = ("WARNING: Skipping " + skipped + " chars, allowing " + max + "\n\r")
 					+ "Full log saved to: " + tempFile.getAbsolutePath() + "\n\r\n\r"
 					+ trimmed;
 			

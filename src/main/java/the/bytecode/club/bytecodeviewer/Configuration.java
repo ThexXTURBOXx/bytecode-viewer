@@ -1,10 +1,29 @@
 package the.bytecode.club.bytecodeviewer;
 
+import the.bytecode.club.bytecodeviewer.bootloader.BootState;
 import the.bytecode.club.bytecodeviewer.gui.theme.LAFTheme;
 import the.bytecode.club.bytecodeviewer.gui.theme.RSTATheme;
 import the.bytecode.club.bytecodeviewer.translation.Language;
 
 import java.io.File;
+
+/***************************************************************************
+ * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
+ * Copyright (C) 2014 Kalen 'Konloch' Kinloch - http://bytecodeviewer.com  *
+ *                                                                         *
+ * This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation, either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ ***************************************************************************/
 
 /**
  * A collection of variables that can be configured through the settings menu or some form of UI/plugin
@@ -12,6 +31,7 @@ import java.io.File;
  * @author Konloch
  * @since 6/21/2021
  */
+
 public class Configuration
 {
 	public static String python2 = "";
@@ -32,6 +52,13 @@ public class Configuration
 	
 	//if true it will show a settings dialog on click instead of more menu items
 	public static boolean useNewSettingsDialog = true; //TODO add to GUI
+	
+	//if true it will put force error UIs and console UIs to be added as a tab
+	public static boolean pluginConsoleAsNewTab = true; //TODO add to GUI
+	//if true it will put force error UIs and console UIs to be added as a tab
+	public static boolean errorLogsAsNewTab = true; //TODO add to GUI
+	//if true the plugin writer will open inside of a tab
+	public static boolean pluginWriterAsNewTab = true; //TODO add to GUI
 	
 	public static boolean forceResourceUpdateFromClassNode = false; //TODO add to GUI
 	public static boolean showDarkLAFComponentIcons = false;
@@ -101,10 +128,4 @@ public class Configuration
 		return new File(".");
 	}
 	
-	public enum BootState
-	{
-		START_UP,
-		SETTINGS_LOADED,
-		GUI_SHOWING,
-	}
 }

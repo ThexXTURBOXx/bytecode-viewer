@@ -13,9 +13,12 @@ import org.objectweb.asm.tree.ClassNode;
 
 import me.konloch.kontainer.io.DiskReader;
 
-import the.bytecode.club.bytecodeviewer.bootloader.Boot;
 import the.bytecode.club.bytecodeviewer.api.BCV;
 import the.bytecode.club.bytecodeviewer.api.ExceptionUI;
+import the.bytecode.club.bytecodeviewer.bootloader.Boot;
+import the.bytecode.club.bytecodeviewer.bootloader.BootState;
+import the.bytecode.club.bytecodeviewer.bootloader.InstallFatJar;
+import the.bytecode.club.bytecodeviewer.bootloader.UpdateCheck;
 import the.bytecode.club.bytecodeviewer.gui.MainViewerGUI;
 import the.bytecode.club.bytecodeviewer.gui.components.*;
 import the.bytecode.club.bytecodeviewer.gui.resourceviewer.TabbedPane;
@@ -68,19 +71,21 @@ import static the.bytecode.club.bytecodeviewer.Constants.*;
  * http://the.bytecode.club
  *
  * TODO BUGS:
- *      + Viewing a new resource should unlock the refresh button
- *      + Resource List creates swing lag with large projects
  *      + View>Visual Settings>Show Class Methods
  *      + Spam-clicking the refresh button will cause the swing thread to deadlock (Quickly opening resources used to also do this)
  *          This is caused by the ctrlMouseWheelZoom code, a temporary patch is just removing it worst case
- *      + Versioning and updating need to be fixed
  *      + Fix classfile searcher
+ *      + BCV's classLoader should be destroyed each time a resource is added or removed
  *
  * TODO API BUGS:
  *      + All of the plugins that modify code need to include BytecodeViewer.updateAllClassNodeByteArrays();
  *      + All of the plugins that do any code changes should also include BytecodeViewer.refreshAllTabs();
  *      + Anything using getLoadedClasses() needs to be replaced with the new API
  *      + Anything using blindlySearchForClassNode() should instead search through the resource container search function
+ *
+ * TODO DarkLAF Specific Bugs:
+ *      + Resource List creates swing lag with large project
+ *      + JMenuBar can only be displayed on a JFrame, a work around is needed for this
  *
  * TODO IN-PROGRESS:
  *      + Resource Exporter/Save/Decompile As Zip needs to be rewritten
@@ -89,7 +94,7 @@ import static the.bytecode.club.bytecodeviewer.Constants.*;
  *      + Fix hook inject for EZ-Injection
  *
  * TODO FEATURES:
- *      + System Consoles and Error Dialogs should create a new tab rather than a new window
+ *      + Multiple error logs from the same plugin should be displayed in a single error window
  *      + On refresh save scroll position
  *      + Option to only compile currently viewed class (true by default)
  *      + CLI Headless needs to be supported
@@ -147,7 +152,7 @@ public class BytecodeViewer
     public static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     
     //Threads
-    private static final Thread versionChecker = new Thread(new VersionChecker(), "Version Checker");
+    private static final Thread versionChecker = new Thread(new UpdateCheck(), "Version Checker");
     private static final Thread pingBack = new Thread(new PingBack(), "Pingback");
     private static final Thread installFatJar = new Thread(new InstallFatJar(), "Install Fat-Jar");
     private static final Thread bootCheck = new Thread(new BootCheck(), "Boot Check");
@@ -189,7 +194,7 @@ public class BytecodeViewer
             
             //load settings and set swing components state
             SettingsSerializer.loadSettings();
-            Configuration.bootState = Configuration.BootState.SETTINGS_LOADED;
+            Configuration.bootState = BootState.SETTINGS_LOADED;
             
             //set translation language
             if (!Settings.hasSetLanguageAsSystemLanguage)
@@ -215,7 +220,7 @@ public class BytecodeViewer
             if (CLI == CommandLineInput.GUI)
             {
                 BytecodeViewer.boot(false);
-                Configuration.bootState = Configuration.BootState.GUI_SHOWING;
+                Configuration.bootState = BootState.GUI_SHOWING;
             }
             else //CLI arguments say keep it CLI
             {

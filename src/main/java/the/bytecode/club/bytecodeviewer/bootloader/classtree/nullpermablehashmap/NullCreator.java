@@ -1,4 +1,4 @@
-package the.bytecode.club.bytecodeviewer.bootloader.util.nullpermablehashmap;
+package the.bytecode.club.bytecodeviewer.bootloader.classtree.nullpermablehashmap;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -22,7 +22,10 @@ package the.bytecode.club.bytecodeviewer.bootloader.util.nullpermablehashmap;
  * @author Bibl (don't ban me pls)
  * @created ages ago
  */
-public interface ValueCreator<V> {
+public class NullCreator<V> implements ValueCreator<V> {
 
-    V create();
+    @Override
+    public V create() {
+        return null;
+    }
 }

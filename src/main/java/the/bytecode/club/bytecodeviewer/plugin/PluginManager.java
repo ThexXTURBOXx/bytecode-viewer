@@ -2,11 +2,15 @@ package the.bytecode.club.bytecodeviewer.plugin;
 
 import java.io.File;
 import java.util.*;
+import java.util.List;
 import javax.swing.filechooser.FileFilter;
 import the.bytecode.club.bytecodeviewer.BytecodeViewer;
+import the.bytecode.club.bytecodeviewer.Configuration;
+import the.bytecode.club.bytecodeviewer.api.ExceptionUI;
 import the.bytecode.club.bytecodeviewer.api.Plugin;
 import the.bytecode.club.bytecodeviewer.api.PluginConsole;
 import the.bytecode.club.bytecodeviewer.gui.components.JFrameConsoleTabbed;
+import the.bytecode.club.bytecodeviewer.gui.resourceviewer.viewer.ComponentViewer;
 import the.bytecode.club.bytecodeviewer.plugin.strategies.*;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedStrings;
 import the.bytecode.club.bytecodeviewer.util.MiscUtils;
@@ -51,7 +55,11 @@ public final class PluginManager
     
     private static Plugin activePlugin;
     private static JFrameConsoleTabbed activeTabbedConsole;
+    private static JFrameConsoleTabbed activeTabbedException;
+    private static HashMap<String, ExceptionUI> exceptionTabs = new HashMap<>();
     private static int consoleCount = 0;
+    private static int exceptionCount = 0;
+    private static int errorCounter = 1;
 
     static
     {
@@ -81,9 +89,12 @@ public final class PluginManager
     {
         //reset the console count
         consoleCount = 0;
+        exceptionCount = 0;
         
         //reset the active tabbed console
         activeTabbedConsole = null;
+        activeTabbedException = null;
+        exceptionTabs.clear();
     
         //reset the active plugin
         activePlugin = newPluginInstance;
@@ -121,6 +132,44 @@ public final class PluginManager
     /**
      * Add an active console from a plugin being ran
      */
+    public static void addExceptionUI(ExceptionUI ui)
+    {
+        if(activePlugin == null)
+        {
+            ui.setLocationRelativeTo(BytecodeViewer.viewer);
+            ui.setVisible(true);
+            return;
+        }
+        
+        final String name = (activePlugin == null || activePlugin.activeContainer == null)
+                ? ("#" + (activeTabbedException.getTabbedPane().getTabCount() + 1)) : activePlugin.activeContainer.name;
+        
+        ExceptionUI existingUI = exceptionTabs.get(name);
+        
+        int id = exceptionCount++;
+        if(activeTabbedException == null)
+        {
+            String title = "Error #" + errorCounter++;
+            activeTabbedException = new JFrameConsoleTabbed(title);
+            
+            if(Configuration.pluginConsoleAsNewTab)
+                ComponentViewer.addComponentAsTab(title, activeTabbedException.getComponent(0));
+            else
+                activeTabbedException.setVisible(true);
+        }
+    
+        if(existingUI == null)
+        {
+            activeTabbedException.addConsole(ui.getComponent(0), name);
+            exceptionTabs.put(name, ui);
+        }
+        else
+            existingUI.appendText("\n\r" + ui.getTextArea().getText());
+    }
+    
+    /**
+     * Add an active console from a plugin being ran
+     */
     public static void addConsole(PluginConsole console)
     {
         int id = consoleCount++;
@@ -128,7 +177,11 @@ public final class PluginManager
         if(activeTabbedConsole == null)
         {
             activeTabbedConsole = new JFrameConsoleTabbed(console.getTitle());
-            activeTabbedConsole.setVisible(true);
+            
+            if(Configuration.pluginConsoleAsNewTab)
+                ComponentViewer.addComponentAsTab(console.getTitle(), activeTabbedConsole.getComponent(0));
+            else
+                activeTabbedConsole.setVisible(true);
         }
     
         console.setConsoleID(id);

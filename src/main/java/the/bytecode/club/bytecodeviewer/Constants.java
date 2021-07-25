@@ -6,6 +6,24 @@ import the.bytecode.club.bytecodeviewer.resources.ResourceType;
 import java.io.File;
 import java.io.PrintStream;
 
+/***************************************************************************
+ * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
+ * Copyright (C) 2014 Kalen 'Konloch' Kinloch - http://bytecodeviewer.com  *
+ *                                                                         *
+ * This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation, either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ ***************************************************************************/
+
 /**
  * General program constants, to use this class include everything as a wildcard static import:
  *      import static the.bytecode.club.bytecodeviewer.Constants.*;
@@ -44,6 +62,9 @@ public class Constants
 	public static final String VERSION = getVersion(BytecodeViewer.class.getPackage().getImplementationVersion());
 	//dev mode is just a check for running via IDE
 	public static boolean DEV_MODE;
+	
+	//if true the version checker will prompt and ask how you would like to proceed
+	public static final boolean FORCE_VERSION_CHECKER_PROMPT = false;
 	
 	public static final String fs = System.getProperty("file.separator");
 	public static final String nl = System.getProperty("line.separator");
@@ -111,6 +132,9 @@ public class Constants
 	 */
 	public static String getVersion(String mavenVersion)
 	{
+		if(FORCE_VERSION_CHECKER_PROMPT)
+			return "1.0.0";
+		
 		if(mavenVersion == null)
 		{
 			DEV_MODE = true;

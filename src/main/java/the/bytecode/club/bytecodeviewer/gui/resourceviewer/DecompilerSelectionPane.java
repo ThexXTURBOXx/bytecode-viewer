@@ -2,6 +2,7 @@ package the.bytecode.club.bytecodeviewer.gui.resourceviewer;
 
 import the.bytecode.club.bytecodeviewer.Configuration;
 import the.bytecode.club.bytecodeviewer.SettingsSerializer;
+import the.bytecode.club.bytecodeviewer.bootloader.BootState;
 import the.bytecode.club.bytecodeviewer.decompilers.Decompiler;
 import the.bytecode.club.bytecodeviewer.gui.components.DecompilerViewComponent;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
@@ -16,6 +17,24 @@ import java.util.Enumeration;
 import java.util.List;
 
 import static the.bytecode.club.bytecodeviewer.gui.components.DecompilerViewComponent.DecompilerComponentType.*;
+
+/***************************************************************************
+ * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
+ * Copyright (C) 2014 Kalen 'Konloch' Kinloch - http://bytecodeviewer.com  *
+ *                                                                         *
+ * This program is free software: you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation, either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>. *
+ ***************************************************************************/
 
 /**
  * @author Konloch
@@ -110,7 +129,7 @@ public class DecompilerSelectionPane
 			AbstractButton button = it.nextElement();
 			button.addActionListener((event)->
 			{
-				if(Configuration.bootState != Configuration.BootState.GUI_SHOWING)
+				if(Configuration.bootState != BootState.GUI_SHOWING)
 					return;
 				
 				SettingsSerializer.saveSettingsAsync();

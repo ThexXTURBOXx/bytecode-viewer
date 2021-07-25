@@ -26,7 +26,7 @@ import the.bytecode.club.bytecodeviewer.util.MiscUtils;
  ***************************************************************************/
 
 /**
- * A ResourceViewer
+ * Represents an opened tab
  *
  * @author Konloch
  */

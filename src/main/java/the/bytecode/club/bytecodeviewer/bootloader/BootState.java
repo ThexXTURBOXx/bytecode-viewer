@@ -1,8 +1,4 @@
-package the.bytecode.club.bytecodeviewer.util;
-
-import the.bytecode.club.bytecodeviewer.bootloader.Boot;
-
-import static the.bytecode.club.bytecodeviewer.Constants.AUTOMATIC_LIBRARY_UPDATING;
+package the.bytecode.club.bytecodeviewer.bootloader;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -23,37 +19,13 @@ import static the.bytecode.club.bytecodeviewer.Constants.AUTOMATIC_LIBRARY_UPDAT
  ***************************************************************************/
 
 /**
- * Downloads & installs the krakatau & enjarify zips
- *
- * Alternatively if OFFLINE_MODE is enabled it will drop the Krakatau and Enjarify versions supplied with BCV
- *
  * @author Konloch
- * @since 7/6/2021
+ * @since 7/23/2021
  */
-public class InstallFatJar implements Runnable
+
+public enum BootState
 {
-	@Override
-	public void run()
-	{
-		try
-		{
-			if (AUTOMATIC_LIBRARY_UPDATING)
-			{
-				Boot.populateUrlList();
-				Boot.populateLibsDirectory();
-				Boot.downloadZipsOnly();
-				Boot.checkKrakatau();
-				Boot.checkEnjarify();
-			}
-			else
-			{
-				Boot.dropKrakatau();
-				Boot.dropEnjarify();
-			}
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
+	START_UP,
+	SETTINGS_LOADED,
+	GUI_SHOWING,
 }
