@@ -1,8 +1,4 @@
-package the.bytecode.club.bytecodeviewer.searching;
-
-import javax.swing.JPanel;
-import org.objectweb.asm.tree.ClassNode;
-import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
+package the.bytecode.club.bytecodeviewer.gui.contextmenu;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -23,16 +19,26 @@ import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
  ***************************************************************************/
 
 /**
- * Search type details
- *
  * @author Konloch
- * @author WaterWolf
- * @since 09/26/2011
+ * @since 7/26/2021
  */
-
-public interface SearchTypeDetails
+public class ContextMenuItem
 {
-    JPanel getPanel();
-    
-    void search(ResourceContainer container, ClassNode node, SearchResultNotifier srn, boolean exact);
+	private final ContextMenuType menuType;
+	private final BuildContextMenuItem buildContextMenuItem;
+	
+	public ContextMenuItem(ContextMenuType menuType, BuildContextMenuItem buildContextMenuItem) {
+		this.menuType = menuType;
+		this.buildContextMenuItem = buildContextMenuItem;
+	}
+	
+	public ContextMenuType getMenuType()
+	{
+		return menuType;
+	}
+	
+	public BuildContextMenuItem getBuildContextMenuItem()
+	{
+		return buildContextMenuItem;
+	}
 }

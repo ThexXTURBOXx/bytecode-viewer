@@ -2,7 +2,6 @@ package the.bytecode.club.bytecodeviewer.gui.resourcelist;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyAdapter;
@@ -13,17 +12,15 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.Map.Entry;
-import java.util.Objects;
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 
 import me.konloch.kontainer.io.DiskWriter;
 import org.apache.commons.io.FilenameUtils;
-import org.objectweb.asm.tree.ClassNode;
 import the.bytecode.club.bytecodeviewer.BytecodeViewer;
-import the.bytecode.club.bytecodeviewer.resources.IconResources;
+import the.bytecode.club.bytecodeviewer.decompilers.Decompiler;
+import the.bytecode.club.bytecodeviewer.gui.contextmenu.ContextMenu;
 import the.bytecode.club.bytecodeviewer.resources.importing.Import;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedStrings;
 import the.bytecode.club.bytecodeviewer.translation.TranslatedComponents;
@@ -33,6 +30,7 @@ import the.bytecode.club.bytecodeviewer.translation.components.TranslatedVisible
 import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
 import the.bytecode.club.bytecodeviewer.util.FileDrop;
 import the.bytecode.club.bytecodeviewer.util.LazyNameUtil;
+import the.bytecode.club.bytecodeviewer.util.MiscUtils;
 
 import static the.bytecode.club.bytecodeviewer.Constants.fs;
 import static the.bytecode.club.bytecodeviewer.Constants.tempDirectory;
@@ -78,34 +76,12 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
     
     public final KeyAdapter search = new SearchKeyAdapter(this);
     
-    private void showPopMenu(ResourceTree tree, TreePath selPath, int x, int y)
+    private void showContextMenu(ResourceTree tree, TreePath selPath, int x, int y)
     {
         if (selPath == null)
             return;
-        
-        rightClickMenu.removeAll();
-        
-        rightClickMenu.add(new ResourceListRightClickRemove(this, x, y, tree));
-        
-        rightClickMenu.add(new AbstractAction("Expand", IconResources.CollapsedIcon.createCollapsedIcon())
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                TreePath selPath = ResourceListPane.this.tree.getPathForLocation(x, y);
-                expandAll(tree, Objects.requireNonNull(selPath), true);
-            }
-        });
-        rightClickMenu.add(new AbstractAction("Collapse", IconResources.ExpandedIcon.createExpandedIcon())
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                TreePath selPath = ResourceListPane.this.tree.getPathForLocation(x, y);
-                expandAll(tree, Objects.requireNonNull(selPath), false);
-            }
-        });
-        
+    
+        ContextMenu.buildMenu(tree, selPath, null, rightClickMenu);
         rightClickMenu.show(this.tree, x, y);
     }
     
@@ -119,6 +95,7 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
     public ResourceListPane()
     {
         super("Files", TranslatedComponents.FILES);
+        
         tree.setRootVisible(false);
         tree.setShowsRootHandles(true);
         quickSearch.setForeground(Color.gray);
@@ -170,7 +147,7 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
         tree.expandPath(new TreePath(tree.getModel().getRoot()));
         tree.updateUI();
     
-        //TODO add a setting for this
+        //TODO add a setting to expand on resource import
         // expandAll(tree, true);
     }
     
@@ -260,7 +237,7 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
     }
 
     @SuppressWarnings("rawtypes")
-    private void expandAll(final JTree tree, final TreePath parent,
+    public void expandAll(final JTree tree, final TreePath parent,
                            final boolean expand) {
         // Traverse children
         final TreeNode node = (TreeNode) parent.getLastPathComponent();
@@ -286,6 +263,35 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
         tree.repaint();
         tree.updateUI();
     }
+    
+    /**
+     * Opens and decompiles the TreePath in a new tab
+     */
+    public void quickDecompile(Decompiler decompiler, TreePath selPath, boolean quickEdit)
+    {
+        Decompiler tempDecompiler1 = BytecodeViewer.viewer.viewPane1.getSelectedDecompiler();
+        boolean editable1 = BytecodeViewer.viewer.viewPane1.isPaneEditable();
+        Decompiler tempDecompiler2 = BytecodeViewer.viewer.viewPane2.getSelectedDecompiler();
+        boolean editable2 = BytecodeViewer.viewer.viewPane2.isPaneEditable();
+        Decompiler tempDecompiler3 = BytecodeViewer.viewer.viewPane3.getSelectedDecompiler();
+        boolean editable3 = BytecodeViewer.viewer.viewPane3.isPaneEditable();
+    
+        BytecodeViewer.viewer.viewPane1.setSelectedDecompiler(decompiler);
+        BytecodeViewer.viewer.viewPane1.setPaneEditable(quickEdit);
+        BytecodeViewer.viewer.viewPane2.setSelectedDecompiler(Decompiler.NONE);
+        BytecodeViewer.viewer.viewPane2.setPaneEditable(false);
+        BytecodeViewer.viewer.viewPane3.setSelectedDecompiler(Decompiler.NONE);
+        BytecodeViewer.viewer.viewPane3.setPaneEditable(false);
+        
+        openPath(selPath);
+    
+        BytecodeViewer.viewer.viewPane1.setSelectedDecompiler(tempDecompiler1);
+        BytecodeViewer.viewer.viewPane1.setPaneEditable(editable1);
+        BytecodeViewer.viewer.viewPane2.setSelectedDecompiler(tempDecompiler2);
+        BytecodeViewer.viewer.viewPane2.setPaneEditable(editable2);
+        BytecodeViewer.viewer.viewPane3.setSelectedDecompiler(tempDecompiler3);
+        BytecodeViewer.viewer.viewPane3.setPaneEditable(editable3);
+    }
 
     public void openPath(TreePath path)
     {
@@ -303,7 +309,7 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
         String cheapHax = path.getPathComponent(1).toString();
         ResourceContainer container = null;
 
-        for (ResourceContainer c : BytecodeViewer.resourceContainers)
+        for (ResourceContainer c : BytecodeViewer.resourceContainers.values())
         {
             if (c.name.equals(cheapHax))
                 container = c;
@@ -311,17 +317,37 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
         
         String name = nameBuffer.toString();
         
-        //TODO add file header check
-        if (name.endsWith(".class"))
+        boolean resourceMode = false;
+        byte[] content = container.resourceClassBytes.get(name);
+        
+        if(content == null)
         {
-            final ClassNode cn = container.getClassNode(
-                    name.substring(0, name.length() - ".class".length()));
-            
-            if (cn != null)
-                BytecodeViewer.viewer.workPane.addClassResource(container, name);
-            else
-                BytecodeViewer.viewer.workPane.addFileResource(container, name);
+            content = container.resourceFiles.get(name);
+            resourceMode = true;
         }
+        
+        //view classes
+        if (content != null && MiscUtils.getFileHeaderMagicNumber(content).equalsIgnoreCase("cafebabe")
+                || name.endsWith(".class"))
+        {
+            try
+            {
+                if(resourceMode)
+                {
+                    //TODO load this cn into the resource viewer
+                    //final ClassNode cn = ASMUtil.bytesToNode(content);
+                }
+                
+                //display via name
+                BytecodeViewer.viewer.workPane.addClassResource(container, name);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                BytecodeViewer.viewer.workPane.addFileResource(container, name);
+            }
+        }
+        //view non-classfile resources
         else if(container.resourceFiles.containsKey(name))
         {
             final String fn = name.toLowerCase();
@@ -339,7 +365,7 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
                 File tempFile = new File(tempDirectory + fs + hash + fs + name + "." + extension);
                 if(!tempFile.exists())
                 {
-                    DiskWriter.replaceFileBytes(tempFile.getAbsolutePath(), container.resourceFiles.get(name), false);
+                    DiskWriter.replaceFileBytes(tempFile.getAbsolutePath(), content, false);
     
                     try
                     {
@@ -371,22 +397,12 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
                 if (e.isMetaDown())
                 {
                     ResourceTree tree = (ResourceTree) e.getSource();
-                    TreePath selPath = ResourceListPane.this.tree.getPathForLocation(e.getX(), e.getY());
+                    TreePath selPath = ResourceListPane.this.tree.getClosestPathForLocation(e.getX(), e.getY());
+                    
                     if (selPath == null)
                         return;
-                
-                    DefaultMutableTreeNode selectNode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
-                    Enumeration<?> enumeration = treeRoot.children();
-                    while (enumeration.hasMoreElements())
-                    {
-                        DefaultMutableTreeNode node = (DefaultMutableTreeNode) enumeration.nextElement();
-                        if (node.isNodeAncestor(selectNode))
-                        {
-                            //rightClickMenu.show(tree, e.getX(), e.getY());
-                            showPopMenu(tree, selPath, e.getX(), e.getY());
-                            break;
-                        }
-                    }
+                    
+                    showContextMenu(tree, selPath, e.getX(), e.getY());
                 }
             }
         });
@@ -403,21 +419,22 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
             tree.expandPath(path);
         });
     
-        /*this.tree.addMouseListener(new MouseAdapter() {
+        this.tree.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                openPath(tree.getPathForLocation(e.getX(), e.getY()));
+                if(e.getButton() == MouseEvent.BUTTON1) //right-click
+                    openPath(tree.getPathForLocation(e.getX(), e.getY()));
             }
-        });*/
+        });
     
-        this.tree.addTreeSelectionListener(arg0 -> {
+        /*this.tree.addTreeSelectionListener(arg0 -> {
             if (cancel) {
                 cancel = false;
                 return;
             }
             
             openPath(arg0.getPath());
-        });
+        });*/
     
         this.tree.addKeyListener(new KeyListener()
         {
@@ -428,22 +445,31 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
             public void keyTyped(KeyEvent e) { }
         
             @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    if (e.getSource() instanceof ResourceTree) {
+            public void keyPressed(KeyEvent e)
+            {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                {
+                    if (e.getSource() instanceof ResourceTree)
+                    {
                         ResourceTree tree = (ResourceTree) e.getSource();
                         openPath(tree.getSelectionPath());
                     }
-                } else if ((int) e.getKeyChar() != 0 && (int) e.getKeyChar() != 8 && (int) e.getKeyChar() != 127 && (int) e.getKeyChar() != 65535 && !e.isControlDown() && !e.isAltDown()) {
+                }
+                else if ((int) e.getKeyChar() != 0 &&
+                        (int) e.getKeyChar() != 8 &&
+                        (int) e.getKeyChar() != 127 &&
+                        (int) e.getKeyChar() != 65535 &&
+                        !e.isControlDown() &&
+                        !e.isAltDown())
+                {
                     quickSearch.grabFocus();
                     quickSearch.setText("" + e.getKeyChar());
                     cancel = true;
-                } else if (e.isControlDown() && (int) e.getKeyChar() == 6) //ctrl + f
-                {
-                    quickSearch.grabFocus();
-                } else {
-                    cancel = true;
                 }
+                else if (e.isControlDown() && (int) e.getKeyChar() == 6) //ctrl + f
+                    quickSearch.grabFocus();
+                else
+                    cancel = true;
             }
         });
     }
@@ -451,18 +477,23 @@ public class ResourceListPane extends TranslatedVisibleComponent implements File
     public void attachQuickSearchListeners()
     {
         quickSearch.addKeyListener(search);
-        quickSearch.addFocusListener(new FocusListener() {
+        quickSearch.addFocusListener(new FocusListener()
+        {
             @Override
-            public void focusGained(final FocusEvent arg0) {
-                if (quickSearch.getText().equals(TranslatedStrings.QUICK_FILE_SEARCH_NO_FILE_EXTENSION.toString())) {
+            public void focusGained(final FocusEvent arg0)
+            {
+                if (quickSearch.getText().equals(TranslatedStrings.QUICK_FILE_SEARCH_NO_FILE_EXTENSION.toString()))
+                {
                     quickSearch.setText("");
                     quickSearch.setForeground(Color.black);
                 }
             }
         
             @Override
-            public void focusLost(final FocusEvent arg0) {
-                if (quickSearch.getText().isEmpty()) {
+            public void focusLost(final FocusEvent arg0)
+            {
+                if (quickSearch.getText().isEmpty())
+                {
                     quickSearch.setText(TranslatedStrings.QUICK_FILE_SEARCH_NO_FILE_EXTENSION.toString());
                     quickSearch.setForeground(Color.gray);
                 }

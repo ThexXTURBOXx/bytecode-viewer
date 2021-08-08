@@ -56,7 +56,9 @@ public class ResourceContainerImporter
 	 */
 	public ResourceContainerImporter importAsFile() throws IOException
 	{
-		return addUnknownFile(container.file.getName(), new FileInputStream(container.file), false);
+		try (FileInputStream fis = new FileInputStream(container.file)) {
+			return addUnknownFile(container.file.getName(), fis, false);
+		}
 	}
 	
 	/**
@@ -71,16 +73,18 @@ public class ResourceContainerImporter
 		try
 		{
 			//attempt to import using Java ZipInputStream
-			importZipInputStream(false);
+			return importZipInputStream(false);
 		}
-		catch (IOException e)
+		catch (Throwable t)
 		{
-			e.printStackTrace();
-			
-			//fallback to apache commons ZipFile
-			importApacheZipFile(false);
+			try {
+				//fallback to apache commons ZipFile
+				return importApacheZipFile(false);
+			} catch (Throwable t1) {
+				t1.addSuppressed(t);
+				throw t1;
+			}
 		}
-		return this;
 	}
 	
 	/**
@@ -91,10 +95,10 @@ public class ResourceContainerImporter
 	{
 		//TODO remove this .class check and just look for cafebabe
 		if (name.endsWith(".class"))
-			addClassResource(name, stream);
-		else if(!classesOnly)
-			addResource(name, stream);
-		
+			return addClassResource(name, stream);
+		else if (!classesOnly)
+			return addResource(name, stream);
+
 		return this;
 	}
 	
@@ -148,21 +152,21 @@ public class ResourceContainerImporter
 	 */
 	private ResourceContainerImporter importZipInputStream(boolean classesOnly) throws IOException
 	{
-		ZipInputStream jis = new ZipInputStream(new FileInputStream(container.file));
-		ZipEntry entry;
-		while ((entry = jis.getNextEntry()) != null)
-		{
-			final String name = entry.getName();
-			
-			//skip directories
-			if(entry.isDirectory())
-				continue;
-			
-			addUnknownFile(name, jis, classesOnly);
-			jis.closeEntry();
+		try (ZipInputStream jis = new ZipInputStream(new FileInputStream(container.file))) {
+			ZipEntry entry;
+			while ((entry = jis.getNextEntry()) != null) {
+				final String name = entry.getName();
+
+				//skip directories
+				if (entry.isDirectory())
+					continue;
+
+				addUnknownFile(name, jis, classesOnly);
+				jis.closeEntry();
+			}
+
+			return this;
 		}
-		jis.close();
-		return this;
 	}
 	
 	/**

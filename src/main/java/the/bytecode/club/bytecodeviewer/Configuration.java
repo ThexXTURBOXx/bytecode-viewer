@@ -6,6 +6,7 @@ import the.bytecode.club.bytecodeviewer.gui.theme.RSTATheme;
 import the.bytecode.club.bytecodeviewer.translation.Language;
 
 import java.io.File;
+import java.io.IOException;
 
 /***************************************************************************
  * Bytecode Viewer (BCV) - Java & Android Reverse Engineering Suite        *
@@ -59,6 +60,9 @@ public class Configuration
 	public static boolean errorLogsAsNewTab = true; //TODO add to GUI
 	//if true the plugin writer will open inside of a tab
 	public static boolean pluginWriterAsNewTab = true; //TODO add to GUI
+	
+	//if true jadx will be above smali in an android grouping
+	public static boolean jadxGroupedWithSmali = true; //TODO add to GUI
 	
 	public static boolean forceResourceUpdateFromClassNode = false; //TODO add to GUI
 	public static boolean showDarkLAFComponentIcons = false;
@@ -115,7 +119,14 @@ public class Configuration
 		if(lastDir.getParentFile() != null && lastDir.getParentFile().exists())
 			return lastDir;
 		
-		return new File(".");
+		try
+		{
+			return new File(".").getCanonicalFile();
+		}
+		catch (IOException e)
+		{
+			return new File(".");
+		}
 	}
 	
 	public static File getLastPluginDirectory()

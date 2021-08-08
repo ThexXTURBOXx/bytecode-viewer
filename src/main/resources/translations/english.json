@@ -5,6 +5,12 @@
   "RELOAD_RESOURCES": "Reload Resources",
   "RUN": "Run",
   "OPEN": "Open...",
+  "OPEN_UNSTYLED": "Open",
+  "QUICK_OPEN": "Quick Open",
+  "REMOVE": "Remove",
+  "NEW": "New",
+  "EXPAND": "Expand",
+  "COLLAPSE": "Collapse",
   "COMPILE": "Compile",
   "SAVE_AS_RUNNABLE_JAR": "Save As Runnable Jar...",
   "SAVE_AS_ZIP": "Save As Zip...",
@@ -256,6 +262,7 @@
   "CLOSE_TAB": "Close Tab",
   "PLEASE_SEND_THIS_ERROR_LOG_TO": "Please send this error log to",
   "PLEASE_SEND_RESOURCES": "If you hold appropriate legal rights to the relevant class/jar/apk file please include that as well.",
+  "ONE_PLUGIN_AT_A_TIME": "There is currently another plugin running right now, please wait for that to finish executing.",
 
 
   "FILES": "Files",

@@ -137,6 +137,9 @@ public enum LAFTheme
 		{
 			BytecodeViewer.viewer.uiComponents.forEach(VisibleComponent::setDefaultIcon);
 			
+			BytecodeViewer.viewer.resourcePane.rightClickMenu.updateUI();
+			BytecodeViewer.viewer.searchBoxPane.rightClickMenu.updateUI();
+			
 			//update all of the setting dialog components
 			SettingsDialog.components.forEach(SwingUtilities::updateComponentTreeUI);
 			

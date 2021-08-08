@@ -2,8 +2,7 @@ package the.bytecode.club.bytecodeviewer;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import javax.swing.*;
 
 import com.google.gson.Gson;
@@ -31,6 +30,7 @@ import the.bytecode.club.bytecodeviewer.resources.ResourceContainer;
 import the.bytecode.club.bytecodeviewer.resources.importing.ImportResource;
 import the.bytecode.club.bytecodeviewer.util.*;
 
+import static javax.swing.JOptionPane.QUESTION_MESSAGE;
 import static the.bytecode.club.bytecodeviewer.Constants.*;
 
 /***************************************************************************
@@ -74,18 +74,17 @@ import static the.bytecode.club.bytecodeviewer.Constants.*;
  *      + View>Visual Settings>Show Class Methods
  *      + Spam-clicking the refresh button will cause the swing thread to deadlock (Quickly opening resources used to also do this)
  *          This is caused by the ctrlMouseWheelZoom code, a temporary patch is just removing it worst case
- *      + Fix classfile searcher
- *      + BCV's classLoader should be destroyed each time a resource is added or removed
  *
  * TODO API BUGS:
  *      + All of the plugins that modify code need to include BytecodeViewer.updateAllClassNodeByteArrays();
  *      + All of the plugins that do any code changes should also include BytecodeViewer.refreshAllTabs();
  *      + Anything using getLoadedClasses() needs to be replaced with the new API
  *      + Anything using blindlySearchForClassNode() should instead search through the resource container search function
+ *      + BCV's classLoader should be destroyed each time a resource is added or removed
  *
  * TODO DarkLAF Specific Bugs:
  *      + Resource List creates swing lag with large project
- *      + JMenuBar can only be displayed on a JFrame, a work around is needed for this
+ *      + JMenuBar can only be displayed on a JFrame, a work around is needed for this (Partially solved)
  *
  * TODO IN-PROGRESS:
  *      + Resource Exporter/Save/Decompile As Zip needs to be rewritten
@@ -94,19 +93,15 @@ import static the.bytecode.club.bytecodeviewer.Constants.*;
  *      + Fix hook inject for EZ-Injection
  *
  * TODO FEATURES:
- *      + Multiple error logs from the same plugin should be displayed in a single error window
  *      + On refresh save scroll position
  *      + Option to only compile currently viewed class (true by default)
  *      + CLI Headless needs to be supported
  *      + Add stackmapframes to bytecode decompiler
- *      + Add https://github.com/exbin/bined as the replacement Hed Viewer/Editor
+ *      + Add https://github.com/exbin/bined as the replacement Hex Viewer/Editor
  *      + Make the decompilers launch in a separate process
- *      + Make it use that global last used file folder inside of export as jar
- *      + Make zipfile not include the decode shit
  *      + Add decompile as zip for krakatau-bytecode, jd-gui and smali for CLI
  *      + Add decompile all as zip for CLI
  *      + Console on the Main Viewer UI
- *      + Plugin Console/System/ETC needs ctrl + mouse wheel
  *      + Font settings
  *
  *  TODO IDEAS:
@@ -137,7 +132,7 @@ public class BytecodeViewer
     public static MainViewerGUI viewer;
     
     //All of the opened resources (Files/Classes/Etc)
-    public static List<ResourceContainer> resourceContainers = new ArrayList<>();
+    public static LinkedHashMap<String,ResourceContainer> resourceContainers = new LinkedHashMap<>();
     
     //All of the created processes (Decompilers/etc)
     public static List<Process> createdProcesses = new ArrayList<>();
@@ -294,7 +289,7 @@ public class BytecodeViewer
      */
     public static void addResourceContainer(ResourceContainer container)
     {
-        resourceContainers.add(container);
+        resourceContainers.put(container.name, container);
         SwingUtilities.invokeLater(() ->
         {
             try {
@@ -359,7 +354,7 @@ public class BytecodeViewer
     @Deprecated
     public static ClassNode blindlySearchForClassNode(String name)
     {
-        for (ResourceContainer container : resourceContainers)
+        for (ResourceContainer container : resourceContainers.values())
         {
             ClassNode node = container.getClassNode(name);
             
@@ -375,7 +370,7 @@ public class BytecodeViewer
      */
     public static ResourceContainer getFileContainer(String name)
     {
-        for (ResourceContainer container : resourceContainers)
+        for (ResourceContainer container : resourceContainers.values())
             if (container.name.equals(name))
                 return container;
     
@@ -385,9 +380,9 @@ public class BytecodeViewer
     /**
      * Returns all of the loaded resource containers
      */
-    public static List<ResourceContainer> getResourceContainers()
+    public static Collection<ResourceContainer> getResourceContainers()
     {
-        return resourceContainers;
+        return resourceContainers.values();
     }
     
     /**
@@ -401,7 +396,7 @@ public class BytecodeViewer
     @Deprecated
     public static byte[] getFileContents(String name)
     {
-        for (ResourceContainer container : resourceContainers)
+        for (ResourceContainer container : resourceContainers.values())
             if (container.resourceFiles.containsKey(name))
                 return container.resourceFiles.get(name);
     
@@ -431,7 +426,7 @@ public class BytecodeViewer
     {
         ArrayList<ClassNode> a = new ArrayList<>();
     
-        for (ResourceContainer container : resourceContainers)
+        for (ResourceContainer container : resourceContainers.values())
             for (ClassNode c : container.resourceClasses.values())
                 if (!a.contains(c))
                     a.add(c);
@@ -571,12 +566,19 @@ public class BytecodeViewer
     
     /**
      * Send a message to alert the user
-     *
-     * @param message the message you need to send
      */
     public static String showInput(String message)
     {
         return ExtendedJOptionPane.showInputDialog(viewer, message);
+    }
+    
+    /**
+     * Send a message to alert the user
+     */
+    public static String showInput(String message, String title, String initialMessage)
+    {
+        return (String) ExtendedJOptionPane.showInputDialog(viewer, message, title,
+                QUESTION_MESSAGE, null, null, initialMessage);
     }
     
     /**
@@ -644,7 +646,7 @@ public class BytecodeViewer
      */
     public static void updateAllClassNodeByteArrays()
     {
-        resourceContainers.forEach(ResourceContainer::updateClassNodeBytes);
+        resourceContainers.values().forEach(ResourceContainer::updateClassNodeBytes);
     }
     
     /**
